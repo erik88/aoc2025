@@ -1,3 +1,34 @@
+struct EqualSplit<'a> {
+    text: &'a str,
+    position: usize,
+    size: usize,
+}
+
+impl<'a> EqualSplit<'a> {
+    fn new(text: &'a str, size: usize) -> Self {
+        EqualSplit {
+            text,
+            position: 0,
+            size,
+        }
+    }
+}
+
+impl<'a> Iterator for EqualSplit<'a> {
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.position >= self.text.len() {
+            return None;
+        }
+
+        self.position += self.size;
+        Some(&self.text[(self.position - self.size)..self.position])
+    }
+}
+
+// ----------------------------------------------
+
 pub fn day2(lines: Vec<String>) {
     let input = lines.join("");
     let ranges = parse_ranges(&input);
@@ -18,8 +49,10 @@ fn find_invalid_in_range_p1(r: (u64, u64)) -> u64 {
     let (low, high) = r;
     for i in low..=high {
         let s = i.to_string();
-        if s.len() % 2 == 1 { continue; }
-        let split = s.split_at(s.len()/2);
+        if s.len() % 2 == 1 {
+            continue;
+        }
+        let split = s.split_at(s.len() / 2);
         if split.0 == split.1 {
             invalid += i;
         }
@@ -40,10 +73,10 @@ fn find_invalid_in_range_p2(r: (u64, u64)) -> u64 {
 }
 
 fn is_invalid_p2(s: &str) -> bool {
-    for part_size in 1..=(s.len()/2) {
+    for part_size in 1..=(s.len() / 2) {
         if s.len() % part_size == 0 {
-            let parts = split_with_size(&s, part_size);
-            if are_all_same(&parts) {
+            let parts = EqualSplit::new(&s, part_size);
+            if are_all_same(parts) {
                 return true;
             }
         }
@@ -51,19 +84,10 @@ fn is_invalid_p2(s: &str) -> bool {
     false
 }
 
-fn split_with_size(s: &str, size: usize) -> Vec<String> {
-    let mut curr = 0;
-    let mut v = Vec::new();
-    while curr < s.len() {
-        v.push(s[curr..curr+size].to_string());
-        curr += size;
-    }
-    v
-}
-
-fn are_all_same(v: &Vec<String>) -> bool {
-    let first = &v[0];
-    for s in v {
+fn are_all_same(split: EqualSplit) -> bool {
+    let mut iter = split.into_iter();
+    let first = iter.next().unwrap();
+    for s in iter {
         if s != first {
             return false;
         }
@@ -72,8 +96,13 @@ fn are_all_same(v: &Vec<String>) -> bool {
 }
 
 fn parse_ranges(input: &str) -> Vec<(u64, u64)> {
-    input.split(",")
-        .map(|rng|
-            rng.split("-").map(|num| num.parse::<u64>().unwrap()).collect::<Vec<u64>>()
-    ).map(|v| (v[0], v[1])).collect()
+    input
+        .split(",")
+        .map(|rng| {
+            rng.split("-")
+                .map(|num| num.parse::<u64>().unwrap())
+                .collect::<Vec<u64>>()
+        })
+        .map(|v| (v[0], v[1]))
+        .collect()
 }
