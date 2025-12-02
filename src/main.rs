@@ -1,12 +1,16 @@
 mod day1;
+mod day2;
 
-use day1::day1;
+
 use std::fs::read_to_string;
+use day1::day1;
+use day2::day2;
 
 fn main() {
-    let lines = read_lines("input/day01.txt");
+    let lines = read_lines("input/day02.txt");
 
-    day1(lines);
+    //day1(lines);
+    day2(lines);
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
