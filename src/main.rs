@@ -1,8 +1,10 @@
 mod day1;
 mod day2;
+mod day3;
 
 use day1::day1;
 use day2::day2;
+use day3::day3;
 
 use std::env;
 use std::fs::read_to_string;
@@ -15,6 +17,7 @@ fn main() {
     match day.as_str() {
         "01" => day1(lines),
         "02" => day2(lines),
+        "03" => day3(lines),
         _ => println!("Invalid day {}, quitting.", day),
     }
 }
