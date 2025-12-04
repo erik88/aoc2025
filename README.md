@@ -7,3 +7,4 @@ Time measured using [hyperfine](https://github.com/sharkdp/hyperfine), running `
 | Day 1 | 20.1 ms | 0.7 ms |
 | Day 2 | 115.0 ms | 1.2 ms |
 | Day 3 | 16.3 ms | 0.4 ms |
+| Day 4 | 70.1 ms | 0.7 ms |
