@@ -1,4 +1,6 @@
-#[derive(Clone, Copy)]
+use std::collections::BTreeSet;
+
+#[derive(Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Debug)]
 struct Interval {
     start: u64,
     end_inclusive: u64
@@ -15,7 +17,7 @@ impl Interval {
 }
 
 pub fn day5(lines: Vec<String>) {
-    let (mut intervals, items) = parse_input(&lines);
+    let (intervals, items) = parse_input(&lines);
     let mut fresh_count = 0;
 
     for item in items {
@@ -27,12 +29,13 @@ pub fn day5(lines: Vec<String>) {
         }
     }
 
-    let mut all_count = 0;
-    merge_all_intervals(&mut intervals);
-    let all_count = intervals.iter().map(|i| i.size()).sum();
+    let non_overlapping = merge_all_intervals(&intervals);
+    let all_count: u64 = non_overlapping.iter().map(|i| i.size()).sum();
 
     println!("Part 1: {}", fresh_count);
     println!("Part 2: {}", all_count);
+    // Too low!  344638686630694
+    // Too high! 358655166017626
 }
 
 fn parse_input(lines: &Vec<String>) -> (Vec<Interval>, Vec<u64>) {
@@ -53,7 +56,7 @@ fn parse_input(lines: &Vec<String>) -> (Vec<Interval>, Vec<u64>) {
                 start: s.next().unwrap().parse().unwrap(),
                 end_inclusive: s.next().unwrap().parse().unwrap()
             })
-        } else { // parsing items
+        } else { // parsing item
             items.push(line.parse().unwrap());
         }
     }
@@ -61,30 +64,39 @@ fn parse_input(lines: &Vec<String>) -> (Vec<Interval>, Vec<u64>) {
     (intervals, items)
 }
 
-fn merge_all_intervals(intervals: &mut Vec<Interval>) {
-    !todo!("not yet implements");
-}
+fn merge_all_intervals(intervals: &Vec<Interval>) -> Vec<Interval> {
+    let mut uncleared = BTreeSet::from_iter(intervals);
+    let mut done: Vec<Interval> = Vec::new();
+    let mut highest_cleared = 0;
 
-fn merge_intervals(i1: Interval, i2: Interval) -> (Option<Interval>, Option<Interval>) {
-    // i1 completely contains i2
-    if i1.start <= i2.start && i1.end_inclusive >= i2.end_inclusive {
-        return (Some(i1), None);
+    while let Some(i1) = uncleared.pop_first() {
+        if i1.end_inclusive <= highest_cleared {
+            // Drop it
+            continue;
+        }
+
+        if let Some(i2) = uncleared.first() {
+            if i1.end_inclusive < i2.start {
+                done.push(*i1);
+                highest_cleared = i1.end_inclusive;
+            } else if i1.start == i2.start {
+                // i2 is larger, drop i1
+            } else {
+                if i1.end_inclusive > i2.end_inclusive {
+                    uncleared.pop_first(); // Remove i2
+                    uncleared.insert(i1); // Try i1 again against next
+                } else {
+                    let shortened = Interval { start: i1.start, end_inclusive: i2.start - 1};
+                    if shortened.size() > 0 {
+                        done.push(shortened);
+                        highest_cleared = shortened.end_inclusive;
+                    }
+                };
+            }
+        } else {
+            done.push(*i1);
+        }
     }
-
-    // i2 completely contains i1
-    if i2.start <= i1.start && i2.end_inclusive >= i1.end_inclusive {
-        return (Some(i2), None);
-    }
-
-    // Check if intervals overlap or are adjacent
-    if i1.end_inclusive + 1 >= i2.start && i2.end_inclusive + 1 >= i1.start {
-        // Merge overlapping or adjacent intervals
-        return (Some(Interval {
-            start: i1.start.min(i2.start),
-            end_inclusive: i1.end_inclusive.max(i2.end_inclusive)
-        }), None);
-    }
-
-    // No overlap - return both intervals
-    (Some(i1), Some(i2))
+    assert!(uncleared.len() == 0, "There were still uncleared left!?");
+    done
 }
