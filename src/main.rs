@@ -1,15 +1,17 @@
+mod board;
 mod day1;
 mod day2;
 mod day3;
 mod day4;
 mod day5;
-mod board;
+mod day6;
 
 use day1::day1;
 use day2::day2;
 use day3::day3;
 use day4::day4;
 use day5::day5;
+use day6::day6;
 
 use std::env;
 use std::fs::read_to_string;
@@ -25,6 +27,7 @@ fn main() {
         "03" => day3(lines),
         "04" => day4(lines),
         "05" => day5(lines),
+        "06" => day6(lines),
         _ => println!("Invalid day {}, quitting.", day),
     }
 }
