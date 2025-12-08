@@ -33,7 +33,7 @@ fn main() {
         "05" => day5(lines),
         "06" => day6(lines),
         "07" => day7(lines),
-        "08" => day8(lines),
+        "08" => day8(lines, !test.is_empty()),
         _ => println!("Invalid day {}, quitting.", day),
     }
 }
