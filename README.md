@@ -1,16 +1,20 @@
 Time measured using [hyperfine](https://github.com/sharkdp/hyperfine), running
-`hyperfine --warmup 3 --runs 10 'cargo run -r [day]'`
+
+```shell
+cargo build --release
+hyperfine --warmup 3 --runs 10 './target/release/aoc2025 [day]'
+```
 
 **σ** measures the standard-deviation, meaning that 68% of runs are within `mean ± σ`.
 
 |       | Mean time | σ      |
 |-------|-----------|--------|
-| Day 1 | 20.1 ms   | 0.7 ms |
-| Day 2 | 115.0 ms  | 1.2 ms |
-| Day 3 | 16.3 ms   | 0.4 ms |
-| Day 4 | 70.1 ms   | 0.7 ms |
-| Day 5 | 68.9 ms   | 1.5 ms |
-| Day 6 | 70.2 ms   | 1.4 ms |
-| Day 7 | 68.7 ms   | 0.7 ms |
-| Day 8 | 155.5 ms  | 1.6 ms |
-| Day 9 | 122.2 ms  | 1.5 ms |
+| Day 1 | < 5 ms    | -      |
+| Day 2 | 90.1 ms   | 1.0 ms |
+| Day 3 | < 5 ms    | -      |
+| Day 4 | 9.1 ms    | 0.1 ms |
+| Day 5 | < 5 ms    | - ms   |
+| Day 6 | < 5 ms    | -      |
+| Day 7 | < 5 ms    | -      |
+| Day 8 | 95.0 ms   | 1.2 ms |
+| Day 9 | 61.5 ms   | 0.8 ms |
