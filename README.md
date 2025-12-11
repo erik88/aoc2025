@@ -7,6 +7,7 @@ hyperfine --warmup 3 --runs 10 './target/release/aoc2025 [day]'
 
 **REQUIREMENTS FOR DAY10**
 
+- Running through a *nix based shell
 - Having **glpsol** available on path, in order to solve GMPL-files
 
 **σ** measures the standard-deviation, meaning that 68% of runs are within `mean ± σ`.
