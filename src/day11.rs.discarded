@@ -1,26 +1,10 @@
 use std::{collections::HashMap, rc::Rc};
 
-#[derive(Clone)]
-struct Node {
-    id: usize,
-    name: String,
-    next: Vec<Rc<Node>>,
-    prev: Vec<Rc<Node>>
-}
-
-struct SearchPath {
-    size: u64,
-    count_from: usize,
-    visited_fft: bool,
-    visited_dac: bool
-}
-
 /// The test file for day11 should include both p1 and p2,
 /// separated by an empty line!
 pub fn day11(_lines: Vec<String>, test: bool) {
-    let (hash_nodes_p1, hash_nodes_p2) = parse_nodes(_lines, test);
-    let p1 = count_paths("you", &hash_nodes_p1);
-    let nodes: Vec<Node> = parse_real_nodes(&hash_nodes_p2, "srv");
+    let (nodes_p1, nodes_p2) = parse_nodes(_lines, test);
+    let p1 = count_paths("you", &nodes_p1);
 
     let mut path_count: HashMap<String, u64> = HashMap::new();
     let all_targets = vec![
@@ -55,12 +39,6 @@ pub fn day11(_lines: Vec<String>, test: bool) {
 
     println!("Part 1: {}", p1);
     println!("Part 2: {}", p2);
-}
-
-fn parse_real_nodes(hash_nodes: &HashMap<String, Vec<String>>, start: &str) -> Vec<Node> {
-    let start = hash_nodes.get(start);
-    let mut nodes: Vec<Option<Node>> = vec![None; hash_nodes.len() + 1];
-
 }
 
 fn count_paths_p2(
