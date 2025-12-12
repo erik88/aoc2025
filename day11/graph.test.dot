@@ -1,0 +1,30 @@
+digraph G {
+    svr[style="filled",color="red"];
+    aaa
+    fft[style="filled",color="green"];
+    bbb
+    tty
+    ccc
+    ddd
+    hub
+    eee
+    dac[style="filled",color="green"];
+    fff
+    ggg
+    hhh
+    out[style="filled",color="yellow"];
+
+    svr -> { aaa bbb }
+    aaa -> { fft }
+    fft -> { ccc }
+    bbb -> { tty }
+    tty -> { ccc }
+    ccc -> { ddd eee }
+    ddd -> { hub }
+    hub -> { fff }
+    eee -> { dac }
+    dac -> { fff }
+    fff -> { ggg hhh }
+    ggg -> { out }
+    hhh -> { out }
+}

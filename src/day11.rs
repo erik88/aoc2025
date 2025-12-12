@@ -1,93 +1,152 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Node {
     id: usize,
     name: String,
-    next: Vec<Rc<Node>>,
-    prev: Vec<Rc<Node>>
+    next: Vec<usize>,
+    prev: Vec<usize>,
 }
 
-struct SearchPath {
+#[derive(Clone)]
+struct Search {
     size: u64,
-    count_from: usize,
+    prev_counted: usize,
     visited_fft: bool,
-    visited_dac: bool
+    visited_dac: bool,
 }
 
 /// The test file for day11 should include both p1 and p2,
 /// separated by an empty line!
 pub fn day11(_lines: Vec<String>, test: bool) {
-    let (hash_nodes_p1, hash_nodes_p2) = parse_nodes(_lines, test);
-    let p1 = count_paths("you", &hash_nodes_p1);
-    let nodes: Vec<Node> = parse_real_nodes(&hash_nodes_p2, "srv");
-
-    let mut path_count: HashMap<String, u64> = HashMap::new();
-    let all_targets = vec![
-        vec!["svr"],
-        vec!["yur", "hlx", "thu"],
-        vec!["ljo", "uvc", "vzm", "mbe", "vqv"],
-        vec!["lau", "cvo", "esm", "wwx"],
-        vec!["wxj", "nhi", "ikn", "pzo"],
-        vec!["you", "ltb", "wkd", "xty"],
-        vec!["out"]
+    let (_, hash_nodes_p2) = parse_nodes(_lines, test);
+    let nodes: Vec<Node> = parse_real_nodes(&hash_nodes_p2);
+    let mut searches: Vec<Search> = vec![
+        Search {
+            size: 0,
+            prev_counted: 0,
+            visited_fft: false,
+            visited_dac: false
+        };
+        nodes.len()
     ];
-    all_targets.iter().flatten().for_each(|&s| { path_count.insert(s.to_string(), 0); () });
-    *path_count.get_mut("svr").unwrap() = 1;
 
-    println!("Counting you to out");
-
-    let mut targets_iter = all_targets.iter();
-    let mut prev_targets = targets_iter.next().unwrap().clone();
-    for (cycle, new_targets) in targets_iter.enumerate() {
-        for prev in prev_targets {
-            println!("Counting from {} to {:?}", prev, new_targets);
-            count_paths_p2(prev, &nodes_p2, &mut path_count, false, false, cycle == 4, cycle == 1, new_targets);
-
+    let start_id = nodes.iter().find(|n| n.name == "svr").unwrap().id;
+    let mut start_search = searches[start_id].clone();
+    start_search.size = 1;
+    go_to(start_id, start_search, &mut searches, &nodes);
+    if !test {
+        for s in vec!["fte", "gsg", "lpi"] {
+            let end_id = nodes.iter().find(|n| n.name == s).unwrap().id;
+            let end_search = &searches[end_id];
+            println!("{s}: {}", end_search.size);
         }
-        prev_targets = new_targets.clone();
     }
-
-    for targets in all_targets.iter().skip(1) {
-
-    }
-    let p2 = 0;
-
-    println!("Part 1: {}", p1);
-    println!("Part 2: {}", p2);
+    let end_node = nodes.iter().find(|n| n.name == "out").unwrap();
+    let end_search = &searches[end_node.id];
+    println!(
+        "{:?}",
+        end_node
+            .prev
+            .iter()
+            .map(|id| nodes[*id].name.clone())
+            .collect::<Vec<String>>()
+            .join(",")
+    );
+    println!("Part 2: {}", end_search.size);
+    // 1769761226520 is too low
 }
 
-fn parse_real_nodes(hash_nodes: &HashMap<String, Vec<String>>, start: &str) -> Vec<Node> {
-    let start = hash_nodes.get(start);
+fn go_to(id: usize, prev_search: Search, searches: &mut Vec<Search>, nodes: &Vec<Node>) {
+    let search = &mut searches[id];
+    let node = &nodes[id];
+
+    if prev_search.visited_fft && !search.visited_fft {
+        // Clear all previous paths, they are now irrelevant!
+        search.size = prev_search.size;
+        search.visited_fft = true;
+    } else if prev_search.visited_dac && !search.visited_dac {
+        // Clear all previous paths, they are now irrelevant!
+        search.size = prev_search.size;
+        search.visited_dac = true;
+    } else if search.visited_fft && !prev_search.visited_fft
+        || search.visited_dac && !prev_search.visited_dac
+    {
+        // Don't count the incoming paths, they are irrelevant!
+    } else {
+        search.size += prev_search.size;
+    }
+    search.prev_counted += 1;
+
+    if node.name == "fft" {
+        search.visited_fft = true;
+    }
+    if node.name == "dac" {
+        search.visited_dac = true;
+    }
+
+    let pass_along = search.clone();
+    // First node will have +1 for prev_counted, so >= is necessary
+    if search.prev_counted >= node.prev.len() {
+        for next_id in &node.next {
+            go_to(*next_id, pass_along.clone(), searches, nodes);
+        }
+    }
+}
+
+fn parse_real_nodes(hash_nodes: &HashMap<String, Vec<String>>) -> Vec<Node> {
     let mut nodes: Vec<Option<Node>> = vec![None; hash_nodes.len() + 1];
+    let mut next_index = 0;
+    let mut index_map: HashMap<String, usize> = HashMap::new();
+    for (node_name, node_next) in hash_nodes {
+        let index = get_or_create_index(node_name, &mut index_map, &mut next_index);
+        let node = Node {
+            id: index,
+            name: node_name.to_string(),
+            next: node_next
+                .iter()
+                .map(|next_name| get_or_create_index(next_name, &mut index_map, &mut next_index))
+                .collect(),
+            prev: vec![],
+        };
 
+        nodes[index] = Some(node);
+    }
+    let out_index = *index_map.get("out").unwrap();
+    nodes[out_index] = Some(Node {
+        id: out_index,
+        name: "out".to_string(),
+        next: vec![],
+        prev: vec![],
+    });
+
+    let mut n: Vec<Node> = nodes.into_iter().map(|i| i.unwrap()).collect();
+
+    for id in 0..n.len() {
+        let node = &n[id];
+        let next_ids = node.next.clone();
+        for idn in next_ids {
+            n[idn].prev.push(id);
+        }
+    }
+
+    n
 }
 
-fn count_paths_p2(
-    id: &str,
-    nodes: &HashMap<String, Vec<String>>,
-    path_count: &mut HashMap<String, u64>,
-    visited_dac: bool,
-    visited_fft: bool,
-    dac_required: bool,
-    fft_required: bool,
-    targets: &Vec<&str>
-) {
-    if targets.contains(&id) {
-        if dac_required && !visited_dac || fft_required && !visited_fft {
-            return;
+fn get_or_create_index(
+    name: &str,
+    index_map: &mut HashMap<String, usize>,
+    next_index: &mut usize,
+) -> usize {
+    match index_map.get_mut(name) {
+        Some(&mut index) => index,
+        None => {
+            let index = *next_index;
+            *next_index += 1;
+            index_map.insert(name.to_string(), index);
+            index
         }
-        *path_count.get_mut(id).unwrap() += 1;
-        return;
     }
-    let exits = nodes.get(id).unwrap_or_else(|| panic!("Could not find exit '{}'",id));
-    exits
-        .iter()
-        .for_each(|exit_id| {
-            let dac = visited_dac || id == "dac";
-            let fft = visited_fft || id == "fft";
-            count_paths_p2(exit_id, nodes, path_count, dac, fft, dac_required, fft_required, targets)
-        });
 }
 
 fn count_paths(id: &str, nodes: &HashMap<String, Vec<String>>) -> u64 {
@@ -106,16 +165,17 @@ fn parse_nodes(
     test: bool,
 ) -> (HashMap<String, Vec<String>>, HashMap<String, Vec<String>>) {
     if !test {
-        let mut hash_nodes = parse_node_section(&lines);
-        hash_nodes.insert("out".to_string(), vec![]);
-        return (hash_nodes.clone(), hash_nodes);
+        let hash_nodes = parse_node_section(&lines);
+
+        (hash_nodes.clone(), hash_nodes)
     } else {
         let mut split = lines.split(|l| l.is_empty());
         let p1 = split.next().unwrap();
         let p2 = split.next().unwrap();
         let hash_nodes_p1 = parse_node_section(&p1.to_vec());
         let hash_nodes_p2 = parse_node_section(&p2.to_vec());
-        return (hash_nodes_p1, hash_nodes_p2);
+
+        (hash_nodes_p1, hash_nodes_p2)
     }
 }
 
