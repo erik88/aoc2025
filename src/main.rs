@@ -2,6 +2,7 @@ mod board;
 mod day1;
 mod day10;
 mod day11;
+mod day12;
 mod day2;
 mod day3;
 mod day4;
@@ -14,6 +15,7 @@ mod day9;
 use day1::day1;
 use day10::day10;
 use day11::day11;
+use day12::day12;
 use day2::day2;
 use day3::day3;
 use day4::day4;
@@ -43,6 +45,7 @@ fn main() {
         "09" => day9(lines),
         "10" => day10(lines),
         "11" => day11(lines, !test.is_empty()),
+        "12" => day12(lines),
         _ => println!("Invalid day {}, quitting.", day),
     }
 }

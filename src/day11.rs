@@ -31,63 +31,56 @@ pub fn day11(_lines: Vec<String>, test: bool) {
         nodes.len()
     ];
 
+    // println!("{:?}", nodes);
+
     let start_id = nodes.iter().find(|n| n.name == "svr").unwrap().id;
     let mut start_search = searches[start_id].clone();
     start_search.size = 1;
     go_to(start_id, start_search, &mut searches, &nodes);
-    if !test {
-        for s in vec!["fte", "gsg", "lpi"] {
-            let end_id = nodes.iter().find(|n| n.name == s).unwrap().id;
-            let end_search = &searches[end_id];
-            println!("{s}: {}", end_search.size);
-        }
-    }
+
     let end_node = nodes.iter().find(|n| n.name == "out").unwrap();
     let end_search = &searches[end_node.id];
-    println!(
-        "{:?}",
-        end_node
-            .prev
-            .iter()
-            .map(|id| nodes[*id].name.clone())
-            .collect::<Vec<String>>()
-            .join(",")
-    );
     println!("Part 2: {}", end_search.size);
     // 1769761226520 is too low
+    // 9463462054500 is also too low...
 }
 
 fn go_to(id: usize, prev_search: Search, searches: &mut Vec<Search>, nodes: &Vec<Node>) {
     let search = &mut searches[id];
     let node = &nodes[id];
 
-    if prev_search.visited_fft && !search.visited_fft {
+    // if node.name == "ccc" {
+    //     println!("ccc");
+    // }
+
+    if node.name == "fft" {
+        search.visited_fft = true;
+        search.size += prev_search.size;
+    } else if node.name == "dac" {
+        search.visited_dac = true;
+        search.size += prev_search.size;
+    } else if prev_search.visited_fft && (!search.visited_fft) {
         // Clear all previous paths, they are now irrelevant!
         search.size = prev_search.size;
         search.visited_fft = true;
-    } else if prev_search.visited_dac && !search.visited_dac {
+    } else if prev_search.visited_dac && (!search.visited_dac) {
         // Clear all previous paths, they are now irrelevant!
         search.size = prev_search.size;
         search.visited_dac = true;
-    } else if search.visited_fft && !prev_search.visited_fft
-        || search.visited_dac && !prev_search.visited_dac
+    } else if (search.visited_fft && (!prev_search.visited_fft))
+        || (search.visited_dac && (!prev_search.visited_dac))
     {
         // Don't count the incoming paths, they are irrelevant!
     } else {
         search.size += prev_search.size;
     }
     search.prev_counted += 1;
-
-    if node.name == "fft" {
-        search.visited_fft = true;
-    }
-    if node.name == "dac" {
-        search.visited_dac = true;
-    }
+    // println!("At {} -> {}", node.name, search.size);
 
     let pass_along = search.clone();
     // First node will have +1 for prev_counted, so >= is necessary
     if search.prev_counted >= node.prev.len() {
+        // println!("Done with {} -> {}", node.name, search.size);
         for next_id in &node.next {
             go_to(*next_id, pass_along.clone(), searches, nodes);
         }
