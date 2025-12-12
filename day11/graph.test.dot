@@ -12,7 +12,7 @@ digraph G {
     fff
     ggg
     hhh
-    out[style="filled",color="yellow"];
+    out[style="filled",color="#ffff00"];
 
     svr -> { aaa bbb }
     aaa -> { fft }

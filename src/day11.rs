@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fs;
 
 #[derive(Clone, Debug)]
 struct Node {
@@ -43,6 +44,48 @@ pub fn day11(_lines: Vec<String>, test: bool) {
     println!("Part 2: {}", end_search.size);
     // 1769761226520 is too low
     // 9463462054500 is also too low...
+
+    print_graph(&nodes, &searches);
+}
+
+fn print_graph(nodes: &Vec<Node>, searches: &Vec<Search>) {
+    let mut sn = String::new();
+    let mut se = String::new();
+    for i in 0..searches.len() {
+        sn += &format!(
+            "{}[style=\"filled\",color=\"{}\"];\n",
+            nodes[i].name,
+            get_color(&searches[i])
+        );
+        se += &format!(
+            "{} -> {{ {} }}\n",
+            nodes[i].name,
+            nodes[i]
+                .next
+                .iter()
+                .map(|&ni| nodes[ni].name.to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        );
+    }
+
+    fs::write(
+        "day11/graph_searched.dot",
+        format!("digraph G {{\n{}\n{}\n}}", sn, se),
+    )
+    .unwrap();
+}
+
+fn get_color(s: &Search) -> &str {
+    if s.visited_fft && s.visited_dac {
+        "#ffffcc"
+    } else if s.visited_dac {
+        "#cd8632"
+    } else if s.visited_fft {
+        "#aaffcc"
+    } else {
+        "#bbbbbb"
+    }
 }
 
 fn go_to(id: usize, prev_search: Search, searches: &mut Vec<Search>, nodes: &Vec<Node>) {
@@ -57,16 +100,25 @@ fn go_to(id: usize, prev_search: Search, searches: &mut Vec<Search>, nodes: &Vec
         search.visited_fft = true;
         search.size += prev_search.size;
     } else if node.name == "dac" {
+        if prev_search.visited_fft {
+            search.visited_fft = true;
+        }
         search.visited_dac = true;
         search.size += prev_search.size;
     } else if prev_search.visited_fft && (!search.visited_fft) {
         // Clear all previous paths, they are now irrelevant!
         search.size = prev_search.size;
         search.visited_fft = true;
+        if prev_search.visited_dac {
+            search.visited_dac = true;
+        }
     } else if prev_search.visited_dac && (!search.visited_dac) {
         // Clear all previous paths, they are now irrelevant!
         search.size = prev_search.size;
         search.visited_dac = true;
+        if prev_search.visited_fft {
+            search.visited_dac = true;
+        }
     } else if (search.visited_fft && (!prev_search.visited_fft))
         || (search.visited_dac && (!prev_search.visited_dac))
     {
