@@ -19,9 +19,15 @@ struct Search {
 
 /// The test file for day11 should include both p1 and p2,
 /// separated by an empty line!
-pub fn day11(_lines: Vec<String>, test: bool) {
-    let (_, hash_nodes_p2) = parse_nodes(_lines, test);
-    let nodes: Vec<Node> = parse_real_nodes(&hash_nodes_p2);
+pub fn day11(_lines: Vec<String>, _: bool, debug: bool) {
+    let hash_nodes = parse_hash_nodes(_lines);
+    p1(&hash_nodes);
+
+    let nodes: Vec<Node> = parse_real_nodes(&hash_nodes);
+    p2(nodes, debug);
+}
+
+fn p2(nodes: Vec<Node>, debug: bool) {
     let mut searches: Vec<Search> = vec![
         Search {
             size: 0,
@@ -31,8 +37,6 @@ pub fn day11(_lines: Vec<String>, test: bool) {
         };
         nodes.len()
     ];
-
-    // println!("{:?}", nodes);
 
     let start_id = nodes.iter().find(|n| n.name == "svr").unwrap().id;
     let mut start_search = searches[start_id].clone();
@@ -45,7 +49,9 @@ pub fn day11(_lines: Vec<String>, test: bool) {
     // 1769761226520 is too low
     // 9463462054500 is also too low...
 
-    print_graph(&nodes, &searches);
+    if debug {
+        print_graph(&nodes, &searches);
+    }
 }
 
 fn print_graph(nodes: &Vec<Node>, searches: &Vec<Search>) {
@@ -74,6 +80,8 @@ fn print_graph(nodes: &Vec<Node>, searches: &Vec<Search>) {
         format!("digraph G {{\n{}\n{}\n}}", sn, se),
     )
     .unwrap();
+
+    println!("Wrote graph to day11/graph_searched.dot");
 }
 
 fn get_color(s: &Search) -> &str {
@@ -91,10 +99,6 @@ fn get_color(s: &Search) -> &str {
 fn go_to(id: usize, prev_search: Search, searches: &mut Vec<Search>, nodes: &Vec<Node>) {
     let search = &mut searches[id];
     let node = &nodes[id];
-
-    // if node.name == "ccc" {
-    //     println!("ccc");
-    // }
 
     if node.name == "fft" {
         search.visited_fft = true;
@@ -127,12 +131,10 @@ fn go_to(id: usize, prev_search: Search, searches: &mut Vec<Search>, nodes: &Vec
         search.size += prev_search.size;
     }
     search.prev_counted += 1;
-    // println!("At {} -> {}", node.name, search.size);
 
     let pass_along = search.clone();
     // First node will have +1 for prev_counted, so >= is necessary
     if search.prev_counted >= node.prev.len() {
-        // println!("Done with {} -> {}", node.name, search.size);
         for next_id in &node.next {
             go_to(*next_id, pass_along.clone(), searches, nodes);
         }
@@ -194,6 +196,11 @@ fn get_or_create_index(
     }
 }
 
+fn p1(hash_nodes: &HashMap<String, Vec<String>>) {
+    let sum = count_paths("you", hash_nodes);
+    println!("Part 1: {}", sum);
+}
+
 fn count_paths(id: &str, nodes: &HashMap<String, Vec<String>>) -> u64 {
     if id == "out" {
         return 1;
@@ -205,26 +212,7 @@ fn count_paths(id: &str, nodes: &HashMap<String, Vec<String>>) -> u64 {
         .sum()
 }
 
-fn parse_nodes(
-    lines: Vec<String>,
-    test: bool,
-) -> (HashMap<String, Vec<String>>, HashMap<String, Vec<String>>) {
-    if !test {
-        let hash_nodes = parse_node_section(&lines);
-
-        (hash_nodes.clone(), hash_nodes)
-    } else {
-        let mut split = lines.split(|l| l.is_empty());
-        let p1 = split.next().unwrap();
-        let p2 = split.next().unwrap();
-        let hash_nodes_p1 = parse_node_section(&p1.to_vec());
-        let hash_nodes_p2 = parse_node_section(&p2.to_vec());
-
-        (hash_nodes_p1, hash_nodes_p2)
-    }
-}
-
-fn parse_node_section(lines: &Vec<String>) -> HashMap<String, Vec<String>> {
+fn parse_hash_nodes(lines: Vec<String>) -> HashMap<String, Vec<String>> {
     let mut hash_nodes: HashMap<String, Vec<String>> = HashMap::new();
     lines.iter().for_each(|l| {
         let (id, strcon) = l.split_once(':').unwrap();

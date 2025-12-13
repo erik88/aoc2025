@@ -29,7 +29,7 @@ use std::env;
 use std::fs::read_to_string;
 
 fn main() {
-    let (day, test) = parse_args();
+    let (day, test, debug) = parse_args();
 
     let lines = read_lines(&format!("input/day{}{}.txt", day, test));
 
@@ -44,17 +44,17 @@ fn main() {
         "08" => day8(lines, !test.is_empty()),
         "09" => day9(lines),
         "10" => day10(lines),
-        "11" => day11(lines, !test.is_empty()),
+        "11" => day11(lines, !test.is_empty(), debug),
         "12" => day12(lines),
         _ => println!("Invalid day {}, quitting.", day),
     }
 }
 
-fn parse_args() -> (String, String) {
+fn parse_args() -> (String, String, bool) {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        println!("Requires arguments: [day] [optional: test]");
+        println!("Requires arguments: [day] [optional: test, debug]");
         std::process::exit(1);
     }
 
@@ -64,13 +64,16 @@ fn parse_args() -> (String, String) {
         args[1].clone()
     };
 
-    let test = match args.get(2).map(|s| s.as_str()) {
-        Some("test") => ".test",
-        _ => "",
-    }
-    .to_owned();
+    let mut test = String::new();
+    let mut debug = false;
 
-    (day, test)
+    args.iter().skip(2).for_each(|arg| match arg.as_str() {
+        "test" => test = ".test".to_string(),
+        "debug" => debug = true,
+        _ => (),
+    });
+
+    (day, test, debug)
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
